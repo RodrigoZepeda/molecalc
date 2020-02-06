@@ -1,0 +1,16 @@
+#!/bin/bash
+
+case $1 in
+     'N') option = 'Normal' ;;
+     'E') option = 'Error' ;;
+     'All') option = 'termination' ;;
+     *) echo 'invalid entry option' ;;
+esac
+
+work_dir = $2
+
+for file in $(ls *.log)
+do
+     echo '----------'${file}'-----------'
+     grep -B 1 ${option} ${work_dir}/${file} | tail -n 2
+done

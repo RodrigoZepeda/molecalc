@@ -1,0 +1,46 @@
+#!/bin/bash
+
+work_dir=$(pwd)
+name=$1
+dir_names=$(ls -d $name)
+rm checkR checkE checkN
+touch checkR checkE checkN
+
+for i in $dir_names
+do
+     cd $i
+     
+     for j in $(ls *.log)
+     do
+          
+	  echo '-----------'$i'/'$j'-----------'
+          Eflag=$(grep termination $j | tail -n 1 | awk '{print $1}')
+          job_name=$(echo $j | grep -oP '.*(?=\.log)' )
+          echo $job_name 
+          
+	  case $Eflag in
+               '')
+	            last_line=$(tail -n 1 $j)
+                    echo 'last line: '$last_line
+	            echo 'continue run for '$i'/'$j
+                    echo '> '$i' '$job_name >> $work_dir/checkR
+               ;;
+                        
+               Error)
+                    echo 'status: '$Eflag && echo 'checkout ' $i'/'$j
+                    grep termination $j
+                    echo '> '$i' '$job_name >> $work_dir/checkE
+               ;;
+                           
+               Normal)
+                   echo 'status: '$Eflag && echo 'Job completed!!'
+                   echo '> '$i' '$job_name >> $work_dir/checkN
+               ;;
+     esac
+     
+     done
+     
+     cd $work_dir
+     
+done
+

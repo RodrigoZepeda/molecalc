@@ -1,0 +1,18 @@
+#!/bin/bash
+echo '#!/bin/bash' > g09script
+echo '#BSUB -oo err.o' >> g09script
+echo '#BSUB -eo err.e' >> g09script
+echo '#BSUB -q ' $1 >> g09script
+echo '#BSUB -n ' $3 >> g09script
+echo '#BSUB -R "span[hosts=1]"' >> g09script
+echo '' >> g09script
+echo 'module load gaussian' >> g09script
+echo 'export GAUSS_SCRDIR=/tmpu/cab_g/$USER/g09scrdir' >> g09script
+echo '' >> g09script
+echo 'g09 <' $2.gjf '> ' $2.log ' &' >> g09script
+
+bsub < g09script
+
+rm g09script
+
+

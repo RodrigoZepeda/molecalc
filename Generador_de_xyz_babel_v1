@@ -1,0 +1,57 @@
+#!/bin/bash
+#correr antes que gaussian
+input_file=$1 #Nombre del archivo
+core_name=$2  #Nombre de la carpeta donde esto vive
+
+#Eliminar comitas
+sed -i 's/"//g' $input_file
+
+mkdir $2
+
+inf=0
+i=0
+touch $core_name
+
+#Esto genera un archivo de smile para cada smile y un xyz
+while read -r smile
+do
+
+     inf=$(($inf+1))
+     i=$(printf "%05d" $inf)
+
+     echo '###############################'
+
+     mol_name=$core_name$i
+     input_smile=$(echo $smile)
+     echo $input_smile > $core_name/$mol_name'_smile'
+     cat $core_name/$mol_name'_smile'
+
+     #Lee las cargas para cada smile y hace la suma de la carga molecular
+     pos=$(cat $core_name/$mol_name'_smile' | awk -F+ '{print NF-1}') #< $core_name/$mol_name'_smile'
+     neg=$(cat $core_name/$mol_name'_smile' | awk -F- '{print NF-1}') #< $core_name/$mol_name'_smile'
+     mol_charge=$(($pos - $neg))
+
+     #Generas un archivo inicial xyz
+     obabel -ismi $core_name/$mol_name'_smile' -oxyz --gen3d -h > $core_name/$mol_name'_coordin'.xyz
+
+     #Hay varios archivos que dan warning en el xyz hay que arreglarlos
+     sed -i "/WARNING/d" $core_name/$mol_name'_coordin'.xyz
+     
+     #Luego checas los conformeros
+     obconformer 50 1000 $core_name/$mol_name'_coordin'.xyz > $core_name/$mol_name'_coord0'.xyz
+
+     #Optimizas usando el arreglo del anterior con el xyz obtenido del previo
+     obminimize -ff mmff94 -sd -n 10000 $core_name/$mol_name'_coord0'.xyz > $core_name/$mol_name.xyz
+
+     #Borras los temporales
+     rm $core_name/$mol_name'_coord0'.xyz
+     rm $core_name/$mol_name'_coordin'.xyz
+
+     #Calcular la multiplicidad de la molécula
+     mult1=$(multiplicity $mol_charge -2 $core_name/$mol_name.xyz | awk '{print $3}')
+     mult2=$(multiplicity $mol_charge -2 $core_name/$mol_name.xyz | awk '{print $5}')
+     mol_charge2=$(multiplicity $mol_charge -2 $core_name/$mol_name.xyz | awk '{print $4}')
+     echo $mol_name'  '$mol_charge'  '$mult1'  '$mol_charge2'  '$mult2
+     echo $mult
+
+done < $input_file

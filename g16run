@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo '#!/bin/bash' > g16script
+echo '#BSUB -oo '$2'.o' >> g16script
+echo '#BSUB -eo '$2'.e' >> g16script
+echo '#BSUB -q ' $1 >> g16script
+echo '#BSUB -n ' $3 >> g16script
+echo '#BSUB -R "span[hosts=1]"' >> g16script
+echo '' >> g16script
+echo 'module load gaussian/2016.03' >> g16script
+echo 'export GAUSS_SCRDIR=/tmpu/cab_g/$USER/g16scrdir' >> g16script
+echo '' >> g16script
+echo 'g16 <' $2.gjf '> ' $2.log ' &' >> g16script
+
+bsub < g16script
+
+rm g16script
+
+

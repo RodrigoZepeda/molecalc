@@ -1,0 +1,14 @@
+#!/bin/bash
+echo '#!/bin/bash' > run
+echo '#BSUB -oo err.o' >> run
+echo '#BSUB -eo err.e' >> run
+echo '#BSUB -J  '$2 >> run
+echo '#BSUB -q  '$1 >> run
+echo '#BSUB -n  '$3 >> run
+echo '' >> run
+echo 'module load siesta/4.0.1' >> run
+echo 'mpirun -np '$3' siesta < '$2.fdf' > '$2.out >> run
+
+bsub < run
+
+rm run

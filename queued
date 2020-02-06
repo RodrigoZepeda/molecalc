@@ -1,0 +1,29 @@
+#!/bin/bash
+
+Jobs=$(bjobs | grep -c 'zmp')
+Run=$(bjobs | grep -c 'RUN')
+Pend=$(bjobs | grep -c 'PEND')
+echo '-------------------'
+echo '>> jobs: '${Jobs}
+#bjobs | grep -c 'zmp'
+
+echo '   >> running: '${Run}
+#bjobs | grep -c 'RUN'
+
+echo '   >> pending: '${Pend}
+#bjobs | grep -c 'PEND'
+echo '-------------------'
+
+jobid_run=$(bjobs | grep 'RUN' | awk '{print $1}')
+jobid_pen=$(bjobs | grep 'PEND' | awk '{print $1}')
+
+
+echo 'Job_id  status    Job_name'
+for i in $jobid_run $jobid_pen
+do
+     jobname=$(bjobs -o 'job_name' $i | grep ' > ' | awk '{print $18}')
+     stat=$(bjobs $i | grep $i | awk '{print $3}')
+     echo "$i  $stat     $jobname"
+     
+done
+     

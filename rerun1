@@ -1,0 +1,15 @@
+#!/bin/bash
+
+work_dir=$(pwd)
+check_file=$1
+queue=$2
+
+while read -r line
+do 
+	file_name=$(echo $line | grep '>' | awk '{print $2}')
+	directory=$(echo $file_name | sed 's/str.log//g')
+	cd $directory
+	g16run $queue $file_name 16
+	cd $work_dir
+done < $check_file
+

@@ -1,0 +1,16 @@
+#!/bin/bash
+echo '#!/bin/bash +H' > runqe
+echo '#BSUB -R  ''"'"same[model] span[ptile='!',Intel_EM64T:16,Intel_a:20,Intel_b:20,Intel_c:32,Intel_d:32]"'"' >> runqe
+echo '#BSUB -q  '$1 >> runqe
+echo "#BSUB -oo $2.o" >> runqe
+echo "#BSUB -eo $2.e" >> runqe
+echo '#BSUB -n  '$3 >> runqe
+echo '' >> runqe
+echo 'module load quantum/6.1' >> runqe
+echo 'export ESPRESSO_TMPDIR=$TMPU/espresso_tmp/$LSB_JOBID' >> runqe
+echo 'mkdir $ESPRESSO_TMPDIR' >> runqe
+echo '' >> runqe
+echo "mpirun $4.x < $2.in > $2.out" >> runqe
+
+bsub < runqe
+rm runqe

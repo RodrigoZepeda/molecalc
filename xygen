@@ -1,0 +1,71 @@
+#!/bin/bash
+
+inf=0
+wrk_dir=$1
+ox_red=$2
+
+
+while read -r smile
+do
+     elec_tot=0
+
+     inf=$(($inf+1))
+     i=$(printf "%03d" $inf)
+
+     mkdir $wrk_dir
+     mkdir Coord$ox_red
+
+
+     echo $smile > $wrk_dir/$wrk_dir"_$i".smi
+
+     for element in C N O F P S Cl K H2 H3
+     do
+          num_element=$(echo $smile | awk -F"$element" '{print NF-1}')
+
+          case $element in
+               Li) atomic_n=3;;
+               Be) atomic_n=4;;
+               B) atomic_n=5;;
+               C)  atomic_n=6;;
+               N)  atomic_n=7;;
+               O)  atomic_n=8;;
+               F)  atomic_n=9;;
+               P)  atomic_n=15;;
+               S)  atomic_n=16;;
+               Cl) atomic_n=17;;
+               K)  atomic_n=19;;
+               H3) atomic_n=3;;
+               H2) atomic_n=2;;
+          esac
+
+          pos=$(echo $smile | awk -F+ '{print NF-1}')
+          neg=$(echo $smile | awk -F- '{print NF-1}')
+          mol_charge=$(($pos - $neg))
+
+          num_elec=$(($atomic_n * $num_element))
+          elec_tot=$(($elec_tot + $num_elec))
+
+          echo "$element,$atomic_n,$num_element,$num_elec,$mol_charge,$elec_tot" 
+     done
+
+     elec_totf=$(($elec_tot - $mol_charge))
+
+     if [ $(($elec_totf % 2)) -eq 0 ]
+     then
+          multiplicity=1
+     else
+          multiplicity=2
+     fi
+
+     echo ">>> $elec_totf,$mol_charge,$multiplicity"
+
+     obabel $wrk_dir/$wrk_dir"_$i".smi -O Coord$ox_red/$wrk_dir"_$i"_init.xyz -h -nowarn --gen3D
+     obconformer 50 1000 Coord$ox_red/$wrk_dir"_$i"_init.xyz > Coord$ox_red/$wrk_dir"_$i"_conf.xyz
+     sed -i '/WARNING/d' Coord$ox_red/$wrk_dir"_$i"_conf.xyz
+     obminimize -ff mmff94 -sd -n 10000 -ixyz Coord$ox_red/$wrk_dir"_$i"_conf.xyz -oxyz > Coord$ox_red/$wrk_dir"_$i".xyz
+
+     rm Coord$ox_red/$wrk_dir"_$i"_init.xyz
+     rm Coord$ox_red/$wrk_dir"_$i"_conf.xyz
+
+done < $wrk_dir.smi
+

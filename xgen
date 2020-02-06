@@ -1,0 +1,56 @@
+#!/bin/bash
+
+input_file=$1.sm
+smiles_in=$2
+core_name=$3
+
+input_smile=$(grep input_smile: $2.var | awk '{print $2}')
+
+mkdir $3
+
+inf=0
+i=0
+touch > $core_name.inchm
+
+while read -r groups
+do
+     inf=$(($inf+1))
+     i=$(printf "%03d" $inf)
+     
+     echo '###############################'
+     
+     R1=$(echo $groups | awk '{print $1}')
+     R2=$(echo $groups | awk '{print $2}')
+     mol_name=$core_name$i
+     
+     #touch $core_name/$mol_name'_smile'
+     echo $input_smile > $core_name/$mol_name'_smile'
+     #cat $core_name/$mol_name'_smile'
+     #echo $R1
+     #echo $R2
+     
+     sed -i "s/{R1}/${R1}/g" $core_name/$mol_name'_smile'
+     sed -i "s/{R2}/${R2}/g" $core_name/$mol_name'_smile'
+     cat $core_name/$mol_name'_smile'
+     pos=$(cat $core_name/$mol_name'_smile' | awk -F+ '{print NF-1}') #< $core_name/$mol_name'_smile'
+     neg=$(cat $core_name/$mol_name'_smile' | awk -F- '{print NF-1}') #< $core_name/$mol_name'_smile'
+     mol_charge=$(($pos - $neg))
+     echo 'writing .xyz'
+     echo 'Charge: '$mol_charge
+     echo $mol_name'  '$mol_charge #>> $core_name.inchm
+     echo '###############################'
+     
+     obabel -ismi $core_name/$mol_name'_smile' -oxyz --gen3d -h > $core_name/$mol_name'_coordin'.xyz
+     
+     #obabel -ismi $core_name/$mol_name'_smile' -oxyz --gen3d > $core_name/$mol_name'_coord0'.xyz
+     obconformer 50 1000 $core_name/$mol_name'_coordin'.xyz > $core_name/$mol_name'_coord0'.xyz
+     obminimize -ff mmff94 -sd -n 10000 $core_name/$mol_name'_coord0'.xyz > $core_name/$mol_name.xyz
+     #obabel $core_name/$mol_name.xyz -O $core_name/$mol_name.mol
+     rm $core_name/$mol_name'_coord0'.xyz
+     rm $core_name/$mol_name'_coordin'.xyz
+     #rm $core_name/$mol_name'_smile'
+     mult=$(multiplicity $mol_charge 1 $core_name/$mol_name.xyz)
+     echo $mult >> $core_name.inchm
+     
+done < $input_file
+
