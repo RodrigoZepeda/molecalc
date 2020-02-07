@@ -1,0 +1,179 @@
+#!/bin/bash
+Method=$2
+SolN=$3
+#Nombre de los Ox
+for tag in Ox OxSP Red RedSP
+do
+     case ${tag} in
+          Ox)
+               for filename in $(ls *${SolN}Ox.log)
+               do
+                    NameOx=$(echo ${filename} | grep -oP '.*(?=\.log)')
+                    NamesOx=("${NamesOx[@]}" ${NameOx})
+               done
+               
+               echo '-----------------------------'${tag}'-'${#NamesOx[@]}'-----------------------------'
+               echo '['${NamesOx[*]}']'     
+          ;;
+          
+          OxSP)
+               for filename in $(ls *${SolN}OxSP.log)
+               do
+                    NameOxSP=$(echo ${filename} | grep -oP '.*(?=\.log)')
+                    NamesOxSP=("${NamesOxSP[@]}" ${NameOxSP})
+               done
+               
+               echo '-----------------------------'${tag}'-'${#NamesOxSP[@]}'-----------------------------'
+               echo '['${NamesOxSP[*]}']'
+          ;;
+          
+          Red)
+               for filename in $(ls *${SolN}Red.log)
+               do
+                    NameRed=$(echo ${filename} | grep -oP '.*(?=\.log)')
+                    NamesRed=("${NamesRed[@]}" ${NameRed})
+               done
+               
+               echo '-----------------------------'${tag}'-'${#NamesRed[@]}'-----------------------------'
+               echo '['${NamesRed[*]}']'
+          ;;
+          
+          RedSP)
+               for filename in $(ls *${SolN}RedSP.log)
+               do
+                    NameRedSP=$(echo ${filename} | grep -oP '.*(?=\.log)')
+                    NamesRedSP=("${NamesRedSP[@]}" ${NameRedSP})
+               done
+               echo '-----------------------------'${tag}'-'${#NamesRedSP[@]}'-----------------------------'
+               echo '['${NamesRedSP[*]}']'
+          ;;     
+     esac
+done
+     if [ ${#NamesOx[@]} -gt ${#NamesRed[@]} ]
+     then
+          for i in $(echo ${NamesOx[@]})
+          do
+               Names=("${Names[@]}" $(echo $i | grep -oP '.*(?=\_[A-Za-z0-9]*)'))
+          done
+          
+     elif [ ${#NamesRed[@]} -gt ${#NamesOx[@]} ]
+     then
+          for i in $(echo ${NamesRed[@]})
+          do
+               Names=("${Names[@]}" $(echo $i | grep -oP '.*(?=\_[A-Za-z0-9]*)'))
+          done
+          
+     elif [ ${#NamesOx[@]} -eq ${#NamesRed[@]} ]
+     then
+          for i in $(echo ${NamesOx[@]})
+          do
+               Names=("${Names[@]}" $(echo $i | grep -oP '.*(?=\_[A-Za-z0-9]*)'))
+          done
+     else Names='err'
+     fi
+     
+     echo '---->'${Names[@]}'<----'
+
+for Molecule in $(echo ${Names[@]})
+do
+     echo '---->'${Molecule}'_'${SolN}'<----'
+     
+     for index in Ox OxSP Red RedSP
+     do
+          File=${Molecule}'_'${SolN}${index}'.log'
+          
+          case ${index} in
+               Ox)
+                    if [[ ! -e ${File} ]];
+                    then
+                         EOx_i='00.00'
+                         EOx=("${EOx[@]}" ${EOx_i})
+                         echo "${File} not found"
+                         echo 'E'${index}'='${EOx_i}
+                    else
+                         EOx_i=$(grep ${Method}') =' ${File} | tail -n 1 | awk '{print $5}')
+                         EOx=("${EOx[@]}" ${EOx_i})
+                         echo 'E'${index}'='${EOx_i}
+                    fi
+               ;;
+               
+               OxSP)
+                    if [[ ! -e ${File} ]];
+                    then
+                         EOxSP_i='00.00'
+                         EOxSP=("${EOxSP[@]}" ${EOxSP_i})
+                         echo "$File not found"
+                         echo 'E'${index}'='${EOxSP_i}
+                    else
+                         EOxSP_i=$(grep ${Method}') =' ${File} | tail -n 1 | awk '{print $5}')
+                         EOxSP=("${EOxSP[@]}" ${EOxSP_i})
+                         echo 'E'${index}'='${EOxSP_i}
+                    fi
+               ;;
+                    
+               Red)
+                    if [[ ! -e ${File} ]];
+                    then
+                         ERed_i='00.00'
+                         ERed=("${ERed[@]}" ${ERed_i})
+                         echo "$File not found"
+                         echo 'E'${index}'='${ERed_i}
+                    else
+                         ERed_i=$(grep ${Method}') =' ${File} | tail -n 1 | awk '{print $5}')
+                         ERed=("${ERed[@]}" ${ERed_i})
+                         echo 'E'${index}'='${ERed_i}
+                    fi
+               ;;
+                    
+               RedSP)
+                    if [[ ! -e ${File} ]];
+                    then
+                         ERedSP_i='00.00'
+                         ERedSP=("${ERedSP[@]}" ${ERedSP_i})
+                         echo "$File not found"
+                         echo 'E'${index}'='${ERedSP_i}
+                    else
+                         ERedSP_i=$(grep ${Method}') =' ${File} | tail -n 1 | awk '{print $5}')
+                         ERedSP=("${ERedSP[@]}" ${ERedSP_i})
+                         echo 'E'${index}'='${ERedSP_i}
+                    fi
+               ;;
+          esac
+     done
+done
+echo '-----------EOx-------------'
+echo ${EOx[@]}
+echo '-----------EOxSP-------------'
+echo ${EOxSP[@]}
+echo '-----------ERed-------------'
+echo ${ERed[@]}
+echo '-----------ERedSP-------------'
+echo ${ERedSP[@]}
+
+
+
+#-----------------------------------------------------
+k=0
+divider='' #==================================================
+divider=$divider$divider
+
+header="\n%0s,%0s,%0s,%0s,%0s\n"
+format="%0s,%6.10f,%6.10f,%6.10f,%6.10f\n"
+
+#width=100
+
+printf "$header" "Names" "EOx" "EOxSP" "ERed" "ERedSP" > $1.ener
+
+
+for ((k=0; k < (${#Names[@]}); k++))
+do
+     
+     printf "$format" \
+     "${Names[$k]}" "${EOx[$k]}" "${EOxSP[$k]}" "${ERed[$k]}" "${ERedSP[$k]}" \
+     
+done >> $1.ener
+
+#echo '---------------E_elec---------------'
+#echo ${E_elec[@]}
+#echo '---------------Names---------------'
+#echo ${Names[@]}
